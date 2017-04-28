@@ -1,5 +1,6 @@
 const {render} = require('pug')
 const {transform} = require('babel-core')
+const transformInlineStyle = require('./inline-style-transformer');
 
 module.exports = function () {
   return {
@@ -16,11 +17,14 @@ module.exports = function () {
             return raw.replace(spaceRegExp, '')
           }).join('\n')
           const html =
-            render(fixedRaw)
+            render(fixedRaw, state.opts)
               .replace(/"\{/g, '{').replace(/\}"/g, '}').replace(/\};"/g, '}')
               .replace(/class="/g, 'className="').replace(/for="/g, 'htmlFor="')
               .replace(/\\\`/g, '`')
-          const {ast} = transform(html, {
+              .replace(/<!--/g, '{/*')
+              .replace(/-->/g, '*/}')
+          const _html = transformInlineStyle(html);
+          const {ast} = transform(_html, {
             presets: ['react']
           })
           path.replaceWithMultiple(ast.program.body)
